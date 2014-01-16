@@ -16,28 +16,58 @@
     <!--[if lt IE 9]>
         <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <style>
-        .time_fields {
-            text-align: center;
-        }
-    </style>
+
     <script type="text/javascript">
-        function stringMatch(s, r) {
+        function stringMatch(s, r) { //function to check if the time format is correct. Needed to check if the match function returned a null, so cleaner to make a separate function than a long if statement below. 
             var matches = s.match(r);
             return matches != null && s == matches[0];
         }
         function TimeCtrl($scope) {
+            var r = new RegExp("((0?[1-9]|10|11|12):[0-5][0-9] ?(AM|am|PM|pm))|((0?[1-9]|1[0-2]):([0-5][0-9]) ?(A|a|P|p))|((0?[1-9]|1[0-2]):([0-5][0-9]) )|((0?[1-9]|1[0-2]):([0-5][0-9]))|((0?[1-9]|1[0-2]):([0-5]))|((0?[1-9]|1[0-2]):)|(10|11|12)|(0?[1-9])|(0)"); //this regex will check to see if you're on the right path to entering a correct time format. Will match at any point of writing the time. 
             $scope.formatTime = function() {
-                var r = new RegExp("((0?[1-9]|10|11|12):[0-5][0-9] ?(AM|am|PM|pm))|((0?[1-9]|1[0-2]):([0-5][0-9]) ?(A|a|P|p))|((0?[1-9]|1[0-2]):([0-5][0-9]) )|((0?[1-9]|1[0-2]):([0-5][0-9]))|((0?[1-9]|1[0-2]):([0-5]))|((0?[1-9]|1[0-2]):)|(10|11|12)|(0?[1-9])|(0)");
                 if ($scope.time == '' || stringMatch($scope.time, r)) {
-                    $scope.message = '';
+                    $scope.time_display = $scope.time; //different variables for time and display_time because we only want to display the time if it's in the correct format.
+                    $scope.time_warning = '';
                 }
                 if ($scope.time != '' && !stringMatch($scope.time, r)) {
-                    $scope.message = "Oops, time needs to be in H:MM XM";
+                    $scope.time_warning = "Oops, time needs to be in H:MM XM";
                 }
             }
             $scope.addMins = function() {
-
+                if ($scope.time != null && stringMatch($scope.time, r) && $scope.minutes.match(/^\d+$/)) {
+                    $scope.minute_warning = '';
+                    //'manually' add time
+                    //get components
+                    var hour = parseInt($scope.time.substring(0, $scope.time.indexOf(':'))); //let's fiddle with substrings instead of regex for a bit.
+                    var minutes = parseInt($scope.time.substring($scope.time.indexOf(':')+1, $scope.time.indexOf(':')+3));
+                    var meridiem = $scope.time.substring($scope.time.indexOf(':')+3, $scope.time.length).replace(' ', '').toLowerCase();
+                    minutes = minutes + parseInt($scope.minutes);
+                    var remainder = minutes - 60;
+                    if (remainder >= 0) { //if we went over 60
+                        hour = hour+1;
+                        minutes = remainder;
+                        if (hour == 13) { //check if clock loops first
+                            hour = 1;
+                        }
+                        if (hour == 12) { //meridiem changes
+                            meridiem = meridiem == 'am' ? 'pm' : 'am';
+                        }
+                        if (minutes < 10) { //format minutes to add the 0
+                            minutes = '0' + minutes;
+                        }
+                    } else {
+                        if (minutes < 10) { //the only thing we need to check is if we need to reformat single digit minutes
+                            minutes = '0' + minutes;
+                        }
+                    }
+                    //format time string
+                    $scope.time = hour + ':' + minutes + ' ' + meridiem.toUpperCase();
+                    $scope.time_display = $scope.time;
+                } else if (isNaN($scope.minutes)) {
+                    $scope.minute_warning = "Please enter a valid number";
+                } else {
+                    $scope.minute_warning = "You need to enter a valid time";
+                }
             }
         }
     </script>
@@ -50,12 +80,13 @@
 
     <div class="container">
         <div class="time_fields" ng-controller="TimeCtrl">
-            <h2>What time be it?</h2>
-            <input ng-model="time" ng-keyup="formatTime()" type="text"><span class="message">{{!message}}</span>
-            <h2>It's {{!time}} O'Clock!</h2>
+            <h2>Enter a time (H:MM XM):</h2>
+            <input ng-model="time" ng-keyup="formatTime()" type="text"><span class="time_warning">{{!time_warning}}</span>
+            <h2>Time: {{!time_display}}</h2>
             <h2>Would you like to add some mins?</h2>
+            <form ng-submit="addMins()">
             <input class="add_mins" ng-model="minutes" type="text">
-            <button class="btn btn-primary" ng-click="addMins()"><i class="glyphicon-plus"></i>Add</button>
+            <button class="btn btn-primary" type="submit"><i class="glyphicon-plus"></i>Add</button><span class="minute_warning">{{!minute_warning}}</span>
         </div>
     </div><!-- end container -->
 
