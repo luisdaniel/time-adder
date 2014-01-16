@@ -37,16 +37,10 @@ class Application(tornado.web.Application):
 # the main page
 class MainHandler(tornado.web.RequestHandler):
     def get(self, q):
-        if 'GOOGLEANALYTICSID' in os.environ:
-            google_analytics_id = os.environ['GOOGLEANALYTICSID']
-        else:
-            google_analytics_id = False
-
         self.render(
             "main.html",
             page_title='Heroku Funtimes',
             page_heading='Hi!',
-            google_analytics_id=google_analytics_id,
         )
 
 
