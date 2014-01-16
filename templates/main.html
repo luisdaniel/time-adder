@@ -17,16 +17,25 @@
         <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
+
+    <!-- 
+    So I decided to give AngularJS a try for this. I've never used it, but some friends have been talking about the wonders of it. It really made updating the values as you type easier than jQuery. 
+    !-->
+
     <script type="text/javascript">
         function stringMatch(s, r) { //function to check if the time format is correct. Needed to check if the match function returned a null, so cleaner to make a separate function than a long if statement below. 
             var matches = s.match(r);
             return matches != null && s == matches[0];
         }
         function TimeCtrl($scope) {
+            $scope.time = ''; //we can stop worrying about $scope.time ever being undefined. 
             var r = new RegExp("((0?[1-9]|10|11|12):[0-5][0-9] ?(AM|am|PM|pm))|((0?[1-9]|1[0-2]):([0-5][0-9]) ?(A|a|P|p))|((0?[1-9]|1[0-2]):([0-5][0-9]) )|((0?[1-9]|1[0-2]):([0-5][0-9]))|((0?[1-9]|1[0-2]):([0-5]))|((0?[1-9]|1[0-2]):)|(10|11|12)|(0?[1-9])|(0)"); //this regex will check to see if you're on the right path to entering a correct time format. Will match at any point of writing the time. 
-            $scope.formatTime = function() {
-                if ($scope.time == '' || stringMatch($scope.time, r)) {
-                    $scope.time_display = $scope.time; //different variables for time and display_time because we only want to display the time if it's in the correct format.
+            $scope.displayTime = function() {
+                if ($scope.time == '' || stringMatch($scope.time, r)) { //correct format?
+                    //different variables for time and display_time because we only want to display the time if it's in the correct format.
+                    //adds a space before AM/PM and converts to uppercase.
+                    //Having this also in this if will make stop printing time_display if a user strays from the correct time format.
+                    $scope.time_display = $scope.time.replace(/([0-9])(?=[a-z])/i, '$1 ').toUpperCase(); 
                     $scope.time_warning = '';
                 }
                 if ($scope.time != '' && !stringMatch($scope.time, r)) {
@@ -34,7 +43,7 @@
                 }
             }
             $scope.addMins = function() {
-                if ($scope.time != null && stringMatch($scope.time, r) && $scope.minutes.match(/^\d+$/)) {
+                if (stringMatch($scope.time, r) && $scope.minutes.match(/^\d+$/)) { //have to enter a time, time string has to match, 
                     $scope.minute_warning = '';
                     //'manually' add time
                     //get components
@@ -43,7 +52,7 @@
                     var meridiem = $scope.time.substring($scope.time.indexOf(':')+3, $scope.time.length).replace(' ', '').toLowerCase();
                     minutes = minutes + parseInt($scope.minutes);
                     var remainder = minutes - 60;
-                    if (remainder >= 0) { //if we went over 60
+                    if (remainder >= 0) { //if we went over 59 mins
                         hour = hour+1;
                         minutes = remainder;
                         if (hour == 13) { //check if clock loops first
@@ -63,9 +72,9 @@
                     //format time string
                     $scope.time = hour + ':' + minutes + ' ' + meridiem.toUpperCase();
                     $scope.time_display = $scope.time;
-                } else if (isNaN($scope.minutes)) {
+                } else if (isNaN($scope.minutes)) { //Not a valid number
                     $scope.minute_warning = "Please enter a valid number";
-                } else {
+                } else { //no time was entered in the first place. 
                     $scope.minute_warning = "You need to enter a valid time";
                 }
             }
@@ -81,7 +90,7 @@
     <div class="container">
         <div class="time_fields" ng-controller="TimeCtrl">
             <h2>Enter a time (H:MM XM):</h2>
-            <input ng-model="time" ng-keyup="formatTime()" type="text"><span class="time_warning">{{!time_warning}}</span>
+            <input ng-model="time" ng-keyup="displayTime()" type="text"><span class="time_warning">{{!time_warning}}</span>
             <h2>Time: {{!time_display}}</h2>
             <h2>Would you like to add some mins?</h2>
             <form ng-submit="addMins()">
