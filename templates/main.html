@@ -50,24 +50,37 @@
                     var hour = parseInt($scope.time.substring(0, $scope.time.indexOf(':'))); //let's fiddle with substrings instead of regex for a bit.
                     var minutes = parseInt($scope.time.substring($scope.time.indexOf(':')+1, $scope.time.indexOf(':')+3));
                     var meridiem = $scope.time.substring($scope.time.indexOf(':')+3, $scope.time.length).replace(' ', '').toLowerCase();
-                    minutes = minutes + parseInt($scope.minutes);
-                    var remainder = minutes - 60;
-                    if (remainder >= 0) { //if we went over 59 mins
-                        hour = hour+1;
-                        minutes = remainder;
-                        if (hour == 13) { //check if clock loops first
-                            hour = 1;
-                        }
-                        if (hour == 12) { //meridiem changes
-                            meridiem = meridiem == 'am' ? 'pm' : 'am';
-                        }
+                    var minutesToAdd = parseInt($scope.minutes);
+                    var hoursToAdd = parseInt(minutesToAdd/60);
+                    var minuteRemainder = parseInt(minutesToAdd%60);
+                    var hourRemainder = 0;
+                    //take care of minutes first
+                    if (minuteRemainder + minutes >= 60) { //if we went over 59 mins
+                        hoursToAdd = hoursToAdd+1; //add an hour to total
+                        minutes = minuteRemainder + minutes - 60; //new minutes
                         if (minutes < 10) { //format minutes to add the 0
                             minutes = '0' + minutes;
                         }
                     } else {
+                        minutes = minuteRemainder + minutes;
                         if (minutes < 10) { //the only thing we need to check is if we need to reformat single digit minutes
                             minutes = '0' + minutes;
                         }
+                    }
+                    hourRemainder = hoursToAdd%24; //taking away the dayss
+                    //var daysToAdd = parseInt(hoursToAdd/24); //useful to know, i guess?
+                    //take care of hours
+                    if (hourRemainder + hour > 23) { //if 23 or more, we're going to need to make some changes
+                        //daysToAdd = daysToAdd + 1;
+                        hour = hourRemainder + hour - 24;
+                        if (hour == 0) { hour = 12; }
+                        if (hourRemainder + hour == 24) { meridiem = meridiem == 'am' ? 'pm' : 'am'; } //change meridiem. Would need to change add daysToAdd ++ in this if statement.
+                    } else if (hourRemainder + hour > 11) {
+                        hour = hourRemainder + hour - 12;
+                        if (hour === 0) { hour = 12; }
+                        if (hourRemainder + hour > 12) { meridiem = meridiem == 'am' ? 'pm' : 'am'; } //change meridiem Would need to change add daysToAdd ++ in this if statement if changing from PM to AM only.
+                    } else {
+                        hour = hour + hourRemainder;
                     }
                     //format time string
                     $scope.time = hour + ':' + minutes + ' ' + meridiem.toUpperCase();
