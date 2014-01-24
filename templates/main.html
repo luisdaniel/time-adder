@@ -89,7 +89,6 @@
                     var minutes = parseInt($scope.time.substring($scope.time.indexOf(':')+1, $scope.time.indexOf(':')+3));
                     var meridiem = $scope.time.substring($scope.time.indexOf(':')+3, $scope.time.length).replace(' ', '').toLowerCase();
                     var minutesToAdd = parseInt($scope.minutes);
-                    console.log(minutesToAdd);
                     var hoursToAdd = parseInt(minutesToAdd/60);
                     var minuteRemainder = parseInt(minutesToAdd%60);
                     var hourRemainder = 0;
