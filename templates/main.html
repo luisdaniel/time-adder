@@ -79,8 +79,8 @@
                     $scope.minute_warning = "You need to enter a valid time";
                 }
             }
-
-            $scope.addMins = function() {
+            //---------------------------------DEPRECATED METHOD-----------------------------//
+            $scope.addMins = function() { 
                 if (stringMatch($scope.time, r2) && $scope.minutes.match(/^-?\d+$/)) { //have to enter a time, time string has to match, 
                     $scope.minute_warning = '';
                     //'manually' add time
@@ -129,6 +129,7 @@
                     $scope.minute_warning = "You need to enter a valid time";
                 }
             }
+            //---------------------------------DEPRECATED METHOD-----------------------------//
         }
     </script>
 
