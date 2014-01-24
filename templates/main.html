@@ -29,6 +29,7 @@
         }
         function TimeCtrl($scope) {
             $scope.time = ''; //we can stop worrying about $scope.time ever being undefined. 
+            var r2 = new RegExp("((0?[1-9]|10|11|12):[0-5][0-9] ?(AM|am|PM|pm))");
             var r = new RegExp("((0?[1-9]|10|11|12):[0-5][0-9] ?(AM|am|PM|pm))|((0?[1-9]|1[0-2]):([0-5][0-9]) ?(A|a|P|p))|((0?[1-9]|1[0-2]):([0-5][0-9]) )|((0?[1-9]|1[0-2]):([0-5][0-9]))|((0?[1-9]|1[0-2]):([0-5]))|((0?[1-9]|1[0-2]):)|(10|11|12)|(0?[1-9])|(0)"); //this regex will check to see if you're on the right path to entering a correct time format. Will match at any point of writing the time. 
             $scope.displayTime = function() {
                 if ($scope.time == '' || stringMatch($scope.time, r)) { //correct format?
@@ -42,8 +43,45 @@
                     $scope.time_warning = "Oops, time needs to be in H:MM XM";
                 }
             }
+            $scope.addMins2 = function() {
+                if (stringMatch($scope.time, r2) && $scope.minutes.match(/^-?\d+$/)) { //have to enter a time, time string has to match, 
+                    $scope.minute_warning = '';
+                    var meridiem = $scope.time.substring($scope.time.indexOf(':')+3, $scope.time.length).replace(' ', '').toLowerCase(); //Get am/pm
+                    var hour = parseInt($scope.time.substring(0, $scope.time.indexOf(':'))); //let's fiddle with substrings instead of regex for a bit.
+                    if (meridiem == 'am') { //if it's the beginning of the day, check to see if hour is 12 AM to start it at zero
+                        hour = hour == '12' ? 0 : hour;
+                    } else {
+                        hour = hour == '12' ? hour : hour+12; //pm add first 12 hours, unless it's 12PM
+                    }
+                    var minutes = parseInt($scope.time.substring($scope.time.indexOf(':')+1, $scope.time.indexOf(':')+3));
+                    var minutesToAdd = $scope.minutes%1440; //Like my life, just throw out the days. Just kidding, my life is awesome.
+                    var newMinutes = hour*60 + minutes + minutesToAdd;
+                    if (newMinutes < 0) { //we went to the previous day
+                        newMinutes = 1440 + newMinutes;
+                    }
+                    if (newMinutes >= 1440) { //we went on to the next day.
+                        newMinutes = newMinutes - 1440;
+                    }
+                    if (newMinutes < 720) {
+                        minutes = parseInt(newMinutes%60) < 10 ? '0'+ parseInt(newMinutes%60) : parseInt(newMinutes%60) //make sure we don't display a time without the leading zero
+                        hour = parseInt(newMinutes/60) == '0' ? 12 : parseInt(newMinutes/60); //make sure we don't display 12 AM as 0 AM
+                        $scope.time = hour + ":" + minutes + " AM";
+                        $scope.time_display = $scope.time;
+                    } else { //PM
+                        hour = parseInt(newMinutes/60) - 12 == 0 ? 12 : parseInt(newMinutes/60) - 12; //make sure we don't display 0PM. Remove 12 since we're on 13-23 hours
+                        minutes = parseInt(newMinutes%60) < 10 ? '0'+ parseInt(newMinutes%60) : parseInt(newMinutes%60) 
+                        $scope.time = hour + ":" + minutes + " PM";
+                        $scope.time_display = $scope.time;
+                    }
+                } else if (!$scope.minutes.match(/^-?\d+$/)) { //Not a valid number
+                    $scope.minute_warning = "Please enter a valid number (positive or negative integers)";
+                } else { //no time was entered in the first place. 
+                    $scope.minute_warning = "You need to enter a valid time";
+                }
+            }
+
             $scope.addMins = function() {
-                if (stringMatch($scope.time, r) && $scope.minutes.match(/^\d+$/)) { //have to enter a time, time string has to match, 
+                if (stringMatch($scope.time, r2) && $scope.minutes.match(/^-?\d+$/)) { //have to enter a time, time string has to match, 
                     $scope.minute_warning = '';
                     //'manually' add time
                     //get components
@@ -51,6 +89,7 @@
                     var minutes = parseInt($scope.time.substring($scope.time.indexOf(':')+1, $scope.time.indexOf(':')+3));
                     var meridiem = $scope.time.substring($scope.time.indexOf(':')+3, $scope.time.length).replace(' ', '').toLowerCase();
                     var minutesToAdd = parseInt($scope.minutes);
+                    console.log(minutesToAdd);
                     var hoursToAdd = parseInt(minutesToAdd/60);
                     var minuteRemainder = parseInt(minutesToAdd%60);
                     var hourRemainder = 0;
@@ -67,7 +106,7 @@
                             minutes = '0' + minutes;
                         }
                     }
-                    hourRemainder = hoursToAdd%24; //taking away the dayss
+                    hourRemainder = hoursToAdd%24; //taking away the days
                     //var daysToAdd = parseInt(hoursToAdd/24); //useful to know, i guess?
                     //take care of hours
                     if (hourRemainder + hour > 23) { //if 23 or more, we're going to need to make some changes
@@ -106,9 +145,10 @@
             <input ng-model="time" ng-keyup="displayTime()" type="text"><span class="time_warning">{{!time_warning}}</span>
             <h2>Time: {{!time_display}}</h2>
             <h2>Would you like to add some mins?</h2>
-            <form ng-submit="addMins()">
-            <input class="add_mins" ng-model="minutes" type="text">
-            <button class="btn btn-primary" type="submit"><i class="glyphicon-plus"></i>Add</button><span class="minute_warning">{{!minute_warning}}</span>
+            <form ng-submit="addMins2()">
+                <input class="add_mins" ng-model="minutes" type="text">
+                <button class="btn btn-primary" type="submit"><i class="glyphicon-plus"></i>Add</button><span class="minute_warning">{{!minute_warning}}</span>
+            </form>
         </div>
     </div><!-- end container -->
 
